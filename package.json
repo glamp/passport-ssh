@@ -23,6 +23,7 @@
   "homepage": "https://github.com/yhat/passport-ssh#readme",
   "dependencies": {
     "passport-strategy": "^1.0.0",
-    "ssh2": "^0.4.12"
+    "ssh2": "^0.4.12",
+    "userid": "^0.2.0"
   }
 }

@@ -3,7 +3,8 @@
  */
 var passport = require('passport-strategy')
   , util = require('util')
-  , sshClient = require('ssh2').Client;
+  , sshClient = require('ssh2').Client
+  , userid = require('userid');
 
 
 /**
@@ -52,6 +53,7 @@ function Strategy(options, verify) {
   // where we're going to be looking for the username/password in the req
   this._usernameField = options.usernameField || 'username';
   this._passwordField = options.passwordField || 'password';
+  this._idField = options.idField || "uid";
   // ssh config
   this._host = options.host || "localhost";
   this._port = options.port || 22;
@@ -74,7 +76,12 @@ function ssh(host, port, username, password, fn) {
   });
 
   conn.on('ready', function() {
-    fn(null, true);
+    var user = {
+      username: username,
+      uid: userid.uid("username"),
+      gid: userid.gid(username)
+    }
+    fn(null, user);
   }).connect({
     host: host,
     port: port,
@@ -84,7 +91,7 @@ function ssh(host, port, username, password, fn) {
   });
 
   conn.on('error', function(err) {
-    fn(null, false);
+    fn(null, null);
   });
 }
 
@@ -105,17 +112,15 @@ Strategy.prototype.authenticate = function(req, options) {
 
 
   if (!username || !password) {
-    return new Error({ message: options.badRequestMessage || 'Missing credentials' }, 400);
+    return self.error(new Error(options.badRequestMessage || 'Missing credentials'));
   }
 
-  ssh(this._host, this._port, username, password, function(err, isValid) {
+  ssh(this._host, this._port, username, password, function(err, user) {
 
     if (err) {
       return new Error(err);
     }
-    if (isValid==false) {
-      return new Error({ message: "Invalid credentials." });
-    }
+
 
     function verified(err, user, info) {
       if (err) {
@@ -124,13 +129,15 @@ Strategy.prototype.authenticate = function(req, options) {
       if (!user) {
         return self.fail(info);
       }
+
+      user.id = user[this._idField];
       self.success(user, info);
     }
 
     if (this._passReqToCallback) {
-      self._verify(req, username, verified);
+      self._verify(req, user, verified);
     } else {
-      self._verify(username, verified);
+      self._verify(user, verified);
     }
   });
   
