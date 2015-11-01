@@ -62,7 +62,7 @@ function Strategy(options, verify) {
   this._port = options.port || 22;
   
   passport.Strategy.call(this);
-  this.name = 'local';
+  this.name = 'ssh';
   this._verify = verify;
   this._passReqToCallback = options.passReqToCallback;
 }
