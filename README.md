@@ -1,5 +1,5 @@
 # passport-ssh
-Passport strategy for authenticating with the linux user group.
+Passport strategy for authenticating with ssh.
 
 
 ## Installation

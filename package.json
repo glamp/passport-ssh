@@ -1,6 +1,6 @@
 {
   "name": "passport-ssh",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "SSH authentication for passport",
   "main": "index.js",
   "scripts": {
