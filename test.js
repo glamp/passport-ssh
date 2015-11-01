@@ -9,8 +9,8 @@ var SSHStrategy = require("./").Strategy;
 
 var req = {
   body: {
-    username: "foo",
-    password: "bar"
+    username: "",
+    password: ""
   },
   query: {
   }

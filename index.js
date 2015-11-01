@@ -105,7 +105,7 @@ function ssh(host, port, username, password, privateKey, fn) {
   }).connect(creds);
 
   conn.on('error', function(err) {
-    fn(err, null);
+    fn(null, null);
   });
 }
 
