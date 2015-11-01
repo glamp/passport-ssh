@@ -10,31 +10,39 @@ var passport = require('passport-strategy')
 /**
  * `Strategy` constructor.
  *
- * The local authentication strategy authenticates requests based on the
- * credentials submitted through an HTML-based login form.
+ * The ssh strategy authenticates requests based on credentials specified
+ * in an HTML-based login form (i.e. a form with "username" and "password"
+ * fields).
  *
- * Applications must supply a `verify` callback which accepts `username` and
- * `password` credentials, and then calls the `done` callback supplying a
- * `user`, which should be set to `false` if the credentials are not valid.
- * If an exception occured, `err` should be set.
+ * Applications can optionally specify a `verify` callback which accepts
+ * `user` and then calls a `done` callback, supplying a `user`, which should
+ * be set to `false` if something isn't right. If an exception occured, `err` 
+ * should be set.
  *
  * Optionally, `options` can be used to change the fields in which the
- * credentials are found.
+ * credentials are found and/or update the ssh configuration.
  *
  * Options:
  *   - `usernameField`  field name where the username is found, defaults to _username_
  *   - `passwordField`  field name where the password is found, defaults to _password_
+ *   - `host` hostname of the ssh server, defaults to _localhost_
+ *   - `port` port ssh is running on `host`, defaults to _22_
  *   - `passReqToCallback`  when `true`, `req` is the first argument to the verify callback (default: `false`)
  *
  * Examples:
  *
- *     passport.use(new LocalStrategy(
- *       function(username, password, done) {
- *         User.findOne({ username: username, password: password }, function (err, user) {
- *           done(err, user);
- *         });
- *       }
+ *     passport.use(new SSHStrategy());
+ *
+ *     passport.use(new SSHStrategy({
+ *        host: process.env.SSH_HOST || "localhost"
+ *     }));
+ *
+ *     passport.use(new SSHStrategy(
+ *        function(user, done) {
+ *          done(null, user);
+ *        }
  *     ));
+ *
  *
  * @param {Object} options
  * @param {Function} verify
@@ -46,14 +54,9 @@ function Strategy(options, verify) {
     options = {};
   }
 
-  if (!verify) {
-    throw new TypeError('LocalStrategy requires a verify callback');
-  }
-  
   // where we're going to be looking for the username/password in the req
   this._usernameField = options.usernameField || 'username';
   this._passwordField = options.passwordField || 'password';
-  this._idField = options.idField || "uid";
   // ssh config
   this._host = options.host || "localhost";
   this._port = options.port || 22;
@@ -78,8 +81,7 @@ function ssh(host, port, username, password, fn) {
   conn.on('ready', function() {
     var user = {
       username: username,
-      uid: userid.uid("username"),
-      gid: userid.gid(username)
+      uid: userid.uid(username)
     }
     fn(null, user);
   }).connect({
@@ -130,14 +132,22 @@ Strategy.prototype.authenticate = function(req, options) {
         return self.fail(info);
       }
 
-      user.id = user[this._idField];
+      user.id = user.uid;
       self.success(user, info);
     }
 
     if (this._passReqToCallback) {
-      self._verify(req, user, verified);
+      if (self._verify) {
+        self._verify(req, user, verified);
+      } else {
+        verified(null, req, user);
+      }
     } else {
-      self._verify(user, verified);
+      if (self._verify) {
+        self._verify(user, verified);
+      } else {
+        verified(null, user);
+      }
     }
   });
   
