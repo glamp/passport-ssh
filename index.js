@@ -25,6 +25,7 @@ var passport = require('passport-strategy')
  * Options:
  *   - `usernameField`  field name where the username is found, defaults to _username_
  *   - `passwordField`  field name where the password is found, defaults to _password_
+ *   - `privateKeyField` private key file to authenticate, defaults to null
  *   - `host` hostname of the ssh server, defaults to _localhost_
  *   - `port` port ssh is running on `host`, defaults to _22_
  *   - `passReqToCallback`  when `true`, `req` is the first argument to the verify callback (default: `false`)
@@ -57,6 +58,8 @@ function Strategy(options, verify) {
   // where we're going to be looking for the username/password in the req
   this._usernameField = options.usernameField || 'username';
   this._passwordField = options.passwordField || 'password';
+  // otherwise, we can try using a private key
+  this._privateKeyField = options.privateKeyField || null;
   // ssh config
   this._host = options.host || "localhost";
   this._port = options.port || 22;
@@ -72,7 +75,22 @@ function Strategy(options, verify) {
  */
 util.inherits(Strategy, passport.Strategy);
 
-function ssh(host, port, username, password, fn) {
+function ssh(host, port, username, password, privateKey, fn) {
+  var creds = {
+    host: host,
+    port: port,
+    username: username,
+    tryKeyboard: true
+  }
+
+  if (password) {
+    creds.password = password;
+  }
+
+  if (privateKey) {
+    creds.privateKey = privateKey;
+  }
+
   var conn = new sshClient();
   conn.on('keyboard-interactive', function(name, instructions, instructionsLang, prompts, finish) {
     finish([password]);
@@ -84,16 +102,10 @@ function ssh(host, port, username, password, fn) {
       uid: userid.uid(username)
     }
     fn(null, user);
-  }).connect({
-    host: host,
-    port: port,
-    username: username,
-    password: password,
-    tryKeyboard: true
-  });
+  }).connect(creds);
 
   conn.on('error', function(err) {
-    fn(null, null);
+    fn(err, null);
   });
 }
 
@@ -109,15 +121,20 @@ Strategy.prototype.authenticate = function(req, options) {
   
   var username = req.body[this._usernameField] || req.query[this._usernameField];
   var password = req.body[this._passwordField] || req.query[this._passwordField];
+  var privateKey = req.body[this._privateKeyField] || req.query[this._privateKeyField];
   
   var self = this;
 
 
-  if (!username || !password) {
+  if (!username) {
+    return self.error(new Error(options.badRequestMessage || 'Missing username'));
+  }
+  
+  if (!password && !privateKey) {
     return self.error(new Error(options.badRequestMessage || 'Missing credentials'));
   }
 
-  ssh(this._host, this._port, username, password, function(err, user) {
+  ssh(this._host, this._port, username, password, privateKey, function(err, user) {
 
     if (err) {
       return new Error(err);

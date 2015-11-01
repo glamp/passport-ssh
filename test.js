@@ -11,6 +11,8 @@ var req = {
   body: {
     username: "foo",
     password: "bar"
+  },
+  query: {
   }
 };
 var opts = {};
