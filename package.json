@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/yhat/passport-ssh.git"
+    "url": "git+ssh://git@github.com/glamp/passport-ssh.git"
   },
   "keywords": [
     "passport",
@@ -18,9 +18,9 @@
   "author": "Greg Lamp",
   "license": "BSD-2-Clause",
   "bugs": {
-    "url": "https://github.com/yhat/passport-ssh/issues"
+    "url": "https://github.com/glamp/passport-ssh/issues"
   },
-  "homepage": "https://github.com/yhat/passport-ssh#readme",
+  "homepage": "https://github.com/glamp/passport-ssh#readme",
   "dependencies": {
     "passport-strategy": "^1.0.0",
     "ssh2": "^0.4.12",
