@@ -170,8 +170,22 @@ Strategy.prototype.authenticate = function(req, options) {
   
 };
 
+function serialize(user, done) {
+  done(null, user.uid);
+};
+
+function deserialize(uid, done) {
+  user = {
+    username: userid.username(id),
+    uid: uid
+  }
+  done(null, user);
+};
+
 
 /**
  * Expose `Strategy`.
  */
 exports.Strategy = Strategy;
+exports.deserialize = deserialize;
+exports.serialize = serialize;
