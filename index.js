@@ -98,7 +98,7 @@ function ssh(host, port, username, password, privateKey, fn) {
 
   conn.on('ready', function() {
     var user = {
-      id: userid.uid(username)
+      id: userid.uid(username),
       username: username,
       uid: userid.uid(username)
     }
