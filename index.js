@@ -98,6 +98,7 @@ function ssh(host, port, username, password, privateKey, fn) {
 
   conn.on('ready', function() {
     var user = {
+      id: userid.uid(username)
       username: username,
       uid: userid.uid(username)
     }
@@ -149,7 +150,6 @@ Strategy.prototype.authenticate = function(req, options) {
         return self.fail(info);
       }
 
-      user.id = user.uid;
       self.success(user, info);
     }
 
@@ -171,11 +171,12 @@ Strategy.prototype.authenticate = function(req, options) {
 };
 
 function serialize(user, done) {
-  done(null, user.uid);
+  done(null, user.id);
 };
 
 function deserialize(uid, done) {
   user = {
+    id: uid,
     username: userid.username(id),
     uid: uid
   }
